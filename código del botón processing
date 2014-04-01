@@ -1,0 +1,63 @@
+import processing.serial.*;
+import cc.arduino.*;
+
+boolean boton=false;  // Variable botón DataLogger
+boolean data_logg=false;  // activo/no activo
+Serial port;
+Serial serial;
+
+void setup(){  //tamaño pantalla
+  size(300, 300);
+   println(serial.list());
+   println(port.list());
+   port = new Serial(this, Serial.list()[0],57600);
+}
+
+
+void draw(){ //creando botón
+  
+    background(255, 255, 255); //fondo pantalla blanco
+update(mouseX, mouseY);
+if(boton){
+  fill(45, 183, 7); //boton verde
+    
+}else{
+  fill(252, 8, 28);//boton rojo
+}
+stroke(255);
+ellipse(150, 150, 50, 50); // donde esta el boton y que tamaño tiene
+}
+
+void update(int x, int y){
+  if (overRect(125, 125, 50, 50)){
+    boton = true;
+  }else{
+    boton=false;
+  }
+}
+boolean overRect(int x, int y, int width, int height)
+{
+  if (mouseX >= x && mouseX <= x+width &&
+      mouseY >= y && mouseY <= y+height) {
+        return true;
+         
+      }else{
+        return false;
+      }
+}
+
+  
+void mousePressed() //funcion para presionar el boton
+{
+  if(boton) {
+    if(data_logg){
+      data_logg = false;
+     
+   port.write(65);
+    
+    }else{
+      data_logg = true;
+      port.write(65);
+    }
+  }
+}
