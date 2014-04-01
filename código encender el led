@@ -1,0 +1,55 @@
+const int botverde = 2;
+const int botrojo = 4;
+const int verde = 8;
+const int rojo = 12;
+int estverde =0;
+int i;
+int estrojo =0;
+unsigned long time,time2;
+void setup()
+{
+  pinMode(verde,OUTPUT);
+  pinMode(rojo,OUTPUT);
+  pinMode(botverde,INPUT);
+  pinMode(botrojo,INPUT);
+  Serial.begin(57600);
+  
+}
+void loop(){
+  
+  if(Serial.available())
+  {
+    if(Serial.read()=='A')
+    
+       {
+         
+          time=millis();
+          time2=millis();
+          digitalWrite(rojo, HIGH);
+          delay(2000);
+          digitalWrite(verde,HIGH);
+          digitalWrite(rojo,HIGH);
+              while((millis()-time2)<10000)
+              {
+                 if((millis()- time)>3000)
+                 {
+                   if(digitalRead(botrojo) == HIGH)
+                    {
+                       digitalWrite(rojo,LOW);
+                       delay(500);
+                       digitalWrite(rojo,HIGH);
+                       delay(500);
+                   }
+                   else
+                   {
+                     digitalWrite(rojo,HIGH);
+                   }
+                }
+             }
+        digitalWrite(verde,LOW);
+        digitalWrite(rojo,LOW);
+     
+    }
+      
+  }
+}
