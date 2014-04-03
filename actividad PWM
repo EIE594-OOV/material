@@ -1,0 +1,20 @@
+Actividad PWM
+
+
+- analogWrite(pin, DC) (¿frecuencia fija?)
+
+La función analogWrite ofrece un interface simple al hardware PWM,
+ pero no ofrece ningún control sobre la frecuencia. 
+
+La frecuencia de la señal PWM en la mayoría de los pins es
+ de aproximadamente 490 Hz. En el arduino Uno, 
+los pines 5 y 6 tienen una frecuencia de aproximadamente 
+980 Hz.
+
+- Como se configura el Timer
+
+Dependiendo de los bits que se tenga
+Se debe modificar los registros TCCRxA, TCCRxB
+
+1/frec de entrada, el ciclo de trabajo
+ mas pequeño es de 1/16Mhz = 62.5[ns]
