@@ -1,0 +1,78 @@
+#include "TimerOne.h"
+int rojo = 13;
+int verde = 12;
+int change1 = 7;
+int change2 = 6;
+volatile int estadorojo = LOW;
+volatile int estadoverde = LOW;
+int ldr = A0;
+float sensor; 
+float voltage =0;
+int x=0;
+int y=0;
+float s;
+void setup()
+{
+  Timer1.initialize(500000);
+  Timer1.attachInterrupt(callback);
+  Serial.begin(9600); 
+  pinMode(rojo, OUTPUT);
+  pinMode(change1,OUTPUT);
+  pinMode(verde, OUTPUT);
+  pinMode(change2,OUTPUT);
+  attachInterrupt(0, ida, CHANGE);
+  attachInterrupt(1, vuelta, CHANGE);
+  pinMode(ldr,INPUT);
+}
+
+void loop()
+{
+  sensor= analogRead(ldr); 
+  s= map(sensor,0,1023,0,255);
+  //voltage = sensor*5.0/1023.0;
+  //Serial.print("TENSION = " );
+  //Serial.println(s);
+  //delay(500);
+  if(sensor >= 1010)
+  {
+    digitalWrite(change1, HIGH);
+    x=1;
+  }else{
+        if(x == 1)
+          {
+          digitalWrite(change1, LOW);
+          digitalWrite(rojo,HIGH);
+          x=0;
+          }
+        }
+  if(sensor <= 550)
+  { 
+    digitalWrite(change2, HIGH); 
+    y=1;
+  }else{
+          if(y == 1)
+          {
+           digitalWrite(change2, LOW);
+           digitalWrite(verde,HIGH);
+           y=0;
+          }
+        }
+}
+
+void ida()
+{
+  estadorojo = !estadorojo; 
+  digitalWrite(rojo, estadorojo);
+  digitalWrite(verde,LOW);
+}
+void vuelta()
+{
+  estadoverde = !estadoverde;
+  digitalWrite(verde, estadoverde);
+  digitalWrite(rojo,LOW);
+}
+
+void callback(){
+  Serial.print("TENSION = " );
+  Serial.println(s);
+}
