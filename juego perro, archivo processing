@@ -1,0 +1,342 @@
+import processing.serial.*;
+
+Serial port;
+int dirantes; 
+int dirdog;
+PFont f;
+String[] carritos = {"huesillo.png", "hamb.png", "carrito.png", "carrito2.png", "carrito3.png"};
+int espaciomin = -300;//distancia entre objetos y aparicion de ellos
+int espaciomax =0 ;
+
+int tamCarros = 40; // tamñano de objetos
+int puntos = 1;  //puntacion inicial 1
+
+Perro perrito; 
+int  k, x;
+Carro[] misCarros1; // arreglo perteneciente a  clase carro       arreglos de elementos
+Carro[] misCarros2;
+Carro[] misCarros3;
+int[] nuevaVel = new int[3]; //arreglo de velocidades
+int[] nuevaX = new int[3]; //arreglo de posiciones
+
+void setup() {
+  size(700, 400);
+
+  port= new Serial(this, Serial.list()[0], 9600);
+  declarar(); // funcion que resetea el juego
+}
+
+//------------------------------------------------------
+//------------------------------------------
+//------------------------------------------inicializa los carros y el perro
+void declarar()
+{
+  //Inicia con 4 elementos por carril
+  misCarros1 = new Carro[4];  //arreglo de cantidad de elementos por carril
+  misCarros2 = new Carro[4];
+  misCarros3 = new Carro[4];
+                              //Inicia los carros, le pasamos el arreglo con los elementos y la posición donde se encuentra.
+  carros(misCarros1, 150); 
+  carros(misCarros2, 250);
+  carros(misCarros3, 350);
+                              //Iniciamos al perro en la pantalla, su posicion x e y, tamaño y la imagen 
+  perrito = new Perro(50, 380, 30, "perro.png");
+}
+
+void draw() {
+  background(0);
+  f= createFont("Arial", 45, true);
+  textFont(f,45);
+ 
+  fill(203,247,10);
+  text("Puntaje:",500,100);
+  text (puntos,550,150);
+  if (puntos <=0){    //imprime GAME OVER en pantalla 
+        text("GAME OVER",100,200);
+  }           //Carga la imagen del perro
+  perrito.cargar();
+ 
+
+                             //Dibuja las lineas blancas
+  for (x=0;x<=500;x=x+100)
+  {
+    stroke(255, 255, 255); 
+    line(x, 10, x, 300);
+  }
+  
+  
+  rectMode(CORNER);           //inserta el "pasto" en la pantalla
+  fill(23,183,0);
+  rect(0,0,100,350);
+  rect(400,0,100,350);
+                              //30 fps (refresca la pantalla 30 veces por segundo)
+  frameRate(30);
+  int l = 0;
+                              //Avanzamos los distintos elementos por cada carril
+  while (l<misCarros1.length) //mientras el largo del arreglo de objetos sea mayor a l avanzan los objetos 
+  {
+    misCarros1[l].avanza();
+    misCarros2[l].avanza();
+    misCarros3[l].avanza();
+                              //Atropello al perro?
+    if (perrito.atropellado(misCarros1[l])||perrito.atropellado(misCarros2[l])||perrito.atropellado(misCarros3[l])) {
+      perrito.setImagen("muerte.png");
+                              //Cargamos la imagen del perrito muerto
+      perrito.cargar();
+    }
+    //Si salio de la pantalla
+    if (misCarros1[l].paso) {  //si los objetos salen de pantalla vuelven a aparecer al principo de forma aleatoria
+      if (l==0) {
+          nuevaVel[0] = -2;
+          //Lo ponemos al final
+          nuevaX[0] = 0; 
+      }
+                              //Cambio el carril
+      cambiar(misCarros1[l], 0);
+    }
+    if (misCarros2[l].paso) {
+      if (l==0) {
+          nuevaVel[1] = -2;
+          nuevaX[1] = 0;
+      }
+      cambiar(misCarros2[l], 1);
+    }
+    if (misCarros3[l].paso) {
+      if (l==0) {
+          nuevaVel[2] = -2;
+          nuevaX[2] = 0;
+      }
+      cambiar(misCarros3[l], 2);
+    }
+    //incremento l
+    l++;
+  }
+}
+                        //Esta funcion genera los elementos que aparecen en cada carril
+void carros(Carro[] autos, int y) {
+  k=0;
+  int vel = 0;
+  int espacio1 = 0;
+  int espacio2 = 0;
+  int nuy = 0;
+    vel = -2;
+    espacio1 = espaciomin;
+    espacio2 = espaciomax;
+    nuy = height;
+
+  
+  //escogemos una imagen random
+  int ima = int(random(0, carritos.length));
+  while (k<autos.length) {
+    //Inicializamos el carro
+    autos[k]=new Carro(y,nuy, vel, tamCarros, carritos[ima], ima);
+    //aumentamos la distancia entre uno y otro carro
+    nuy = nuy + int(random (espacio1, espacio2));
+    //escogemos una imagen random
+    ima = int(random(0, carritos.length));
+    k++;
+  }
+}
+
+
+//Genera un nuevo carro y lo unico que hace es reutilizar el objeto y cambiar sus valores
+void cambiar(Carro car, int lug) {
+
+    nuevaX[lug] = nuevaX[lug] + int(random (espaciomin, espaciomax));
+  int ima = int(random(0, carritos.length));
+  //Cambia la posicion x, la velocidad y la imagen
+  car.cambio(nuevaX[lug], nuevaVel[lug], carritos[ima],ima);
+  //El auto no ha cruzado la pantalla todavia
+  car.paso = false;
+}
+//------------------------------------------
+//------------------------------------------
+//------------------------------------------ comunicacion arduino
+void serialEvent(Serial port)
+{
+  if (port.available()>0)
+  {
+    dirdog= port.read();
+    dirantes= 150;
+    if(dirdog==0)
+    {
+      declarar();
+  puntos=1;
+    }
+  if (!perrito.murio) {
+     if (dirdog>dirantes) {  //mover perro a la izquierda
+      if (perrito.getPosx() > 30) {
+        perrito.setPosx(perrito.getPosx() - 10);
+      }
+    }
+    else if (dirdog<dirantes) {  //mover perro a la derecha
+      if (perrito.getPosx() < (width-200)) {
+        perrito.setPosx(perrito.getPosx() + 10);
+      }
+    }
+    dirantes=dirdog;
+  }
+  }
+}
+//________________________________________________________________________________________________________
+//------------------------------------------
+//------------------------------------------
+
+//    CLASES    //
+
+
+class Carro
+{
+  public int tipo;                       //tipo 0 y tipo 1 suma 1 punto (Hamburguesa y hueso)
+                                        //tipo 2, tipo 3 y tipo 4 resta 2 puntos
+  public boolean desaparecer = false;                
+  private int posx;
+  private int posy;
+  private int velocidad;
+  private int tamano;
+  private String imagen;
+  boolean paso=false;
+
+  //Inicializamos el carro
+  Carro(int px, int py, int ve, int ta, String im, int elemento) {
+   
+    posx = px;
+    posy = py;
+    velocidad = ve;
+    tamano = ta;
+    imagen = im;
+    tipo = elemento;  
+ }
+
+  void setPosx(int x) {
+    posx=x;
+  }
+  void setPosy(int y) {
+    posy=y;
+  }
+  int getPosx() {
+    return posx;
+  }
+  int getPosy() {
+    if (posy <1)
+    desaparecer=false;
+    return posy;
+  }
+  int getTam() {
+    return tamano;
+  }
+
+  //Avanza a la siguiente posicion de arriba a abajo, pero si cruza la pantalla "paso" lo hace true
+  void avanza () {
+    PImage b = loadImage(imagen);
+    imageMode(CENTER);
+    if (desaparecer == false)
+    {
+    image(b, posx, posy, tamano, tamano/2);
+    }
+    posy = posy - velocidad;
+    if (posy > height+tamano){
+      posy = -tamano;
+      paso = true;
+    }
+  }
+
+  //Cambia la posicion x, la velocidad y la imagen
+  void cambio(int y, int v, String i, int p) {
+    posy = y;
+    velocidad = v;
+    imagen = i;
+    tipo=p;
+  }
+}
+
+class Perro {
+  private int posx;
+  private int posy;
+  private int tamano;
+  private String imagen;
+  boolean murio = false;
+
+  Perro(int px, int py, int ta, String im) {
+    posx = px;
+    posy = py;
+    tamano = ta;
+    imagen = im;
+  }
+
+  //Carga la imagen
+  void cargar() {
+    PImage b = loadImage(imagen);
+    imageMode(CENTER);
+    image(b, posx, posy, tamano, tamano);
+  }
+
+  void setPosx(int x) {
+    posx=x;
+  }
+  void setPosy(int y) {
+    posy=y;
+  }
+  int getPosx() {
+    return posx;
+  }
+  int getPosy() {
+    return posy;
+  }
+  void setImagen(String im) {
+    imagen = im;
+  }
+
+  //Deteccion de colisiones
+  boolean atropellado(Carro auto) {
+    int CmaxX = auto.getPosx()+(auto.getTam()/2);
+    int CmaxY = auto.getPosy()+(auto.getTam()/2);
+    int CminX = auto.getPosx()-(auto.getTam()/2);
+    int CminY = auto.getPosy()-(auto.getTam()/2);
+    int SmaxX = posx+(tamano/2);
+    int SmaxY = posy+(tamano/2);
+    int SminX = posx-(tamano/2);
+    int SminY = posy-(tamano/2);
+  
+       
+if (auto.desaparecer == false)
+{    
+    if (SmaxX<CmaxX && SmaxX >CminX) {       //Detecta si el perro se encuentra en el centro del elemento
+      if (SmaxY<CmaxY && SmaxY >CminY) {
+          if (auto.tipo==0 || auto.tipo==1) 
+        {
+       puntos++;
+        }
+    if (auto.tipo>1) 
+        {
+        puntos-=2;
+        }
+        auto.desaparecer=true;
+          if (puntos <=0){
+        //      text("GAME OVER",100,200);
+                murio = true;
+        
+      }
+    }
+    }
+    
+    if (SminX < CmaxX && SminX >CminX) {      //Detecta si el perro se acerca por los bordes del elemento
+      if (SminY < CmaxY && SminY > CminY) {
+         if (auto.tipo==0 || auto.tipo==1) 
+        {
+       puntos++;
+        }
+    if (auto.tipo>1) 
+        {
+        puntos-=2;
+        }
+        auto.desaparecer=true;
+            if (puntos <=0){
+        murio = true;
+      }
+     }
+    }
+}
+    return murio;
+  }
+}
