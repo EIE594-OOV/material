@@ -1,0 +1,34 @@
+#include <TimerOne.h>
+
+int i = 0; //entrada analoga A0
+int leer;
+int velocidad; // mapeo de leer
+int boton= 8;
+int estado=0;
+void setup()
+{
+  pinMode(boton,INPUT);
+ Timer1.initialize(50000); 
+ Timer1.attachInterrupt(tiempo);
+ Serial.begin(9600);
+}
+
+
+void loop()
+{  
+
+  if((estado=digitalRead(boton))==1)
+  {
+    velocidad=0;
+    
+  }else
+  {
+  leer=analogRead(i);
+  velocidad = map(leer,415,260,200,100);
+  }
+}
+
+void tiempo()
+{
+  Serial.write(velocidad);
+}
